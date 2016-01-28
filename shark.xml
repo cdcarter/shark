@@ -1,0 +1,32 @@
+<project name="shark" default="deploy" basedir="." xmlns:sf="antlib:com.salesforce">
+    <property environment="env" />
+
+    <fail>
+       <condition>
+           <not><isset property="env.CUMULUSCI_PATH" /></not>
+       </condition>
+    </fail>
+
+    <property name="cumulus_ci.basedir"
+              value="${env.CUMULUSCI_PATH}/build"/>
+
+    <taskdef
+       resource="net/sf/antcontrib/antlib.xml"
+       classpath="${env.CUMULUSCI_PATH}/build/lib/ant-contrib-1.0b2.jar" />
+
+    <!-- If no propertyfile was passed in command line, attempt to load a build.properties if it exists -->
+    <if>
+        <and>
+            <not>
+                <isset property="sf:username" />
+            </not>
+            <available file="${basedir}/build.properties" />
+        </and>
+        <then>
+          <loadproperties srcFile="${basedir}/build.properties"/>
+        </then>
+    </if>
+
+    <!-- Load CumulusCI macros! targets -->
+    <import file="${env.CUMULUSCI_PATH}/build/cumulusci.xml" />
+</project>

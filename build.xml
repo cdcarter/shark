@@ -1,0 +1,4 @@
+<!-- a sample buildfile -->
+<project name="sharkbuilder" default="deploy" basedir="." xmlns:sf="antlib:com.salesforce">
+  <import file="${basedir}/shark.xml" />
+</project>
