@@ -15,10 +15,11 @@
        classpath="${env.CUMULUSCI_PATH}/build/lib/ant-contrib-1.0b2.jar" />
 
     <!-- If no propertyfile was passed in command line, attempt to load a build.properties if it exists -->
+    <!-- commandline passed propfiles override all credentials with sf.override -->
     <if>
         <and>
             <not>
-                <isset property="sf:username" />
+                <isset property="sf.override.username" />
             </not>
             <available file="${basedir}/build.properties" />
         </and>
@@ -26,6 +27,16 @@
           <loadproperties srcFile="${basedir}/build.properties"/>
         </then>
     </if>
+    <!-- properties now contains:
+      sf.dev.username=
+      sf.dev.password=
+      sf.dev.loginurl=
+      sf.test.username=
+      sf.test.password=
+      sf.test.loginurl=
+      sf.prod.username=
+      sf.prod.password=
+      sf.prod.loginurl= -->
 
     <!-- Load CumulusCI macros! targets -->
     <import file="${env.CUMULUSCI_PATH}/build/cumulusci.xml" />
