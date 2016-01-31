@@ -38,6 +38,104 @@
       sf.prod.password=
       sf.prod.loginurl= -->
 
+    <!-- Setup a blank namespace prefix string.  -->
+    <property name="cumulusci.namespace.prefix" value="" />
+
+    <if>
+      <isset property="sf.override.username"/>
+      <then>
+        <property name="sf.dev.username"
+                  value="${sf.override.username}"/>
+        <property name="sf.dev.password"
+                  value="${sf.override.password}"/>
+        <property name="sf.dev.loginurl"
+                  value="${sf.override.loginurl}"/>
+      </then>
+    </if>
+
+    <!-- createUnmanagedPackage: Does an empty deployment into an unmanaged package to create it if it does not exist -->
+    <target name="createUnmanagedPackageDev">
+        <if>
+            <isset property="shark.package.name" />
+            <then>
+                <delete dir="${basedir}/create_package" />
+                <mkdir dir="${basedir}/create_package" />
+                <buildPackageXml package="${shark.package.name}" version="${shark.package.apiVersion}" srcDir="create_package" />
+                <sf:deploy username="${sf.dev.username}" password="${sf.dev.password}" serverurl="${sf.dev.loginurl}" deployRoot="create_package"  />
+                <delete dir="${basedir}/create_package" />
+            </then>
+        </if>
+    </target>
+
     <!-- Load CumulusCI macros! targets -->
     <import file="${env.CUMULUSCI_PATH}/build/cumulusci.xml" />
+
+    <target name="checkDevConnection">
+      <sf:deploy username="${sf.dev.username}" password="${sf.dev.password}" serverurl="${sf.dev.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
+    </target>
+    <target name="checkUATConnection">
+      <sf:deploy username="${sf.test.username}" password="${sf.test.password}" serverurl="${sf.test.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
+    </target>
+    <target name="checkProdConnection">
+      <sf:deploy username="${sf.prod.username}" password="${sf.prod.password}" serverurl="${sf.prod.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
+    </target>
+    <target name="checkConnection">
+      <antcall target="checkDevConnection"/>
+      <antcall target="checkUATConnection"/>
+      <antcall target="checkProdConnection"/>
+    </target>
+
+    <target name="retrievePackaged">
+      <sequential>
+        <delete dir="${shark.package.name}" />
+        <mkdir dir="${shark.package.name}"/>
+        <sf:retrieve
+          username="${sf.dev.username}"
+          password="${sf.dev.password}"
+          serverurl="${sf.dev.loginurl}"
+          retrieveTarget="${shark.package.name}"
+          packageNames="${shark.package.name}"/>
+      </sequential>
+    </target>
+
+    <target name="retrieveDev">
+      <sequential>
+        <delete dir="dev" />
+        <mkdir dir="dev"/>
+        <sf:retrieve
+          username="${sf.dev.username}"
+          password="${sf.dev.password}"
+          serverurl="${sf.dev.loginurl}"
+          retrieveTarget="dev"
+          packageNames="${shark.package.name}"/>
+      </sequential>
+    </target>
+
+    <target name="retrieveTest">
+      <sequential>
+        <delete dir="test" />
+        <mkdir dir="test"/>
+        <sf:retrieve
+          username="${sf.test.username}"
+          password="${sf.test.password}"
+          serverurl="${sf.test.loginurl}"
+          retrieveTarget="test"
+          packageNames="${shark.package.name}"/>
+      </sequential>
+    </target>
+
+    <target name="retrieveProd">
+      <sequential>
+        <delete dir="prod" />
+        <mkdir dir="prod"/>
+        <sf:retrieve
+          username="${sf.prod.username}"
+          password="${sf.prod.password}"
+          serverurl="${sf.prod.loginurl}"
+          retrieveTarget="prod"
+          packageNames="${shark.package.name}"/>
+      </sequential>
+    </target>
+
+
 </project>
