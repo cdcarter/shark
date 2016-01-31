@@ -7,6 +7,8 @@
        </condition>
     </fail>
 
+    <import file="${basedir}/git-ant-macros.xml" />
+
     <property name="cumulus_ci.basedir"
               value="${env.CUMULUSCI_PATH}/build"/>
 

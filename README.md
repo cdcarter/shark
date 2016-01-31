@@ -1,6 +1,22 @@
 # shark
 
-shark is a tool for salesforce consultants
+shark is an app cloud orchestrator
+
+## environments
+
+shark expects multiple environments:
+* `sf.dev`  - A Developer Edition or Developer Sandbox
+* `sf.test` - A Developer or Developer Pro Sandbox
+* `sf.prod` - An Enterprise Edition Customer Org
+
+and tracks a working copy for each of them in `dev/`, `test/` and, `prod/`. This allows the user to use the standard folder `src/` for use with their IDE of choice. It is understood that `src/` would be bound to the `sf.dev` org.
+
+## shark-flow
+1) `ant refresh-dev` - pulls down the latest master from github, uninstalls the unmanaged package from `sf.dev`, deploys the latest master to `sf.dev`, and runs data creation scripts.
+2) `ant retrieve-dev-for-commit -Dfeature=[feature-name]` - resets `dev/`, clones github master, creates a new feature branch, retrieves `sf.dev` to `dev/`, and runs git status.
+3) `git add`/`git commit` - to commit changes
+4) `ant merge-dev-to-test -Dfeature=[feature-name]` - merges the feature branch `feature/[feature-name]` into master (if able to be automatically merged), deploys the merged master to `sf.test`, and runs data creation scripts
+
 
 # why we import cumulusci
 ```
