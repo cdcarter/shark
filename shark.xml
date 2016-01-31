@@ -178,5 +178,28 @@
 
     </target>
 
+    <target name="retrieve-feature">
+      <sequential>
+        <delete dir="working" />
+
+        <!-- clone master into src/ -->
+        <git-clone repository="${shark.repo.remote}"
+                   dest="working" dir="${basedir}"/>
+
+        <!-- create new branch named feature/${feature}-->
+        <git-checkout branch="master"
+                      targetbranch="feature/${feature}"
+                      dir="working"/>
+        <!-- retrieve packaged to src -->
+        <echo message="Retrieving package from ${org} to src/"/>
+        <sf:retrieve
+            username="${sf.username}"
+            password="${sf.password}"
+            serverurl="${sf.serverurl}"
+            retrieveTarget="working/src"
+            packageNames="${shark.package.name}"/>
+      </sequential>
+    </target>
+
 
 </project>

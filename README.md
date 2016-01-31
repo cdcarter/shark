@@ -19,7 +19,7 @@ and tracks a working copy for each of them in `dev/`, `test/` and, `prod/`. This
 5) `ant deploy -Dorg=test` - to push latest master to sf.test, load data, run tests
 
 ## todo
-* pull cumulusci.xml into this repo and basedir, so that versioning doesn't become a thing.
+* pull cumulusci.xml into this repo and basedir, so that versioning doesn't become a thing. we're already using a fork of it to get proper behavior. this  may be a lot of work, untangling all the cumulusci properties.
 
 # why we import cumulusci
 ```
