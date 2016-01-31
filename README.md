@@ -12,11 +12,14 @@ shark expects multiple environments:
 and tracks a working copy for each of them in `dev/`, `test/` and, `prod/`. This allows the user to use the standard folder `src/` for use with their IDE of choice. It is understood that `src/` would be bound to the `sf.dev` org.
 
 ## shark-flow
-1) `ant refresh-dev` - pulls down the latest master from github, uninstalls the unmanaged package from `sf.dev`, deploys the latest master to `sf.dev`, and runs data creation scripts.
-2) `ant retrieve-dev-for-commit -Dfeature=[feature-name]` - resets `dev/`, clones github master, creates a new feature branch, retrieves `sf.dev` to `dev/`, and runs git status.
-3) `git add`/`git commit` - to commit changes
-4) `ant merge-dev-to-test -Dfeature=[feature-name]` - merges the feature branch `feature/[feature-name]` into master (if able to be automatically merged), deploys the merged master to `sf.test`, and runs data creation scripts
+1) `ant deploy` - pulls down the latest master from github, uninstalls the unmanaged package from `sf.dev`, deploys the latest master to `sf.dev`, and runs data creation scripts.
+2) `ant retrieve-dev -Dfeature=[feature-name]` - resets `src/`, clones github master, creates a new feature branch, retrieves `sf.dev` to `src/`, and runs git status.
+3) `git add`/`git commit`/`git push` - to commit changes
+4) create and merge PR on github -- coming later
+5) `ant deploy -Dorg=test` - to push latest master to sf.test, load data, run tests
 
+## todo
+* pull cumulusci.xml into this repo and basedir, so that versioning doesn't become a thing.
 
 # why we import cumulusci
 ```

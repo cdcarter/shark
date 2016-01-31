@@ -15,19 +15,13 @@
     <property name="cumulus_ci.basedir"
               value="${env.CUMULUSCI_PATH}/build"/>
 
+
     <taskdef
        resource="net/sf/antcontrib/antlib.xml"
        classpath="${env.CUMULUSCI_PATH}/build/lib/ant-contrib-1.0b2.jar" />
 
-    <!-- If no propertyfile was passed in command line, attempt to load a build.properties if it exists -->
-    <!-- commandline passed propfiles override all credentials with sf.override -->
     <if>
-        <and>
-            <not>
-                <isset property="sf.override.username" />
-            </not>
-            <available file="${basedir}/build.properties" />
-        </and>
+        <available file="${basedir}/build.properties" />
         <then>
           <loadproperties srcFile="${basedir}/build.properties"/>
         </then>
@@ -43,30 +37,42 @@
       sf.prod.password=
       sf.prod.loginurl= -->
 
-    <!-- Setup a blank namespace prefix string.  -->
-    <property name="cumulusci.namespace.prefix" value="" />
+    <macrodef name="setOrg">
+      <attribute name="org"/>
+      <sequential>
+        <property name="sf.username" value="${sf.@{org}.username}" />
+        <property name="sf.password" value="${sf.@{org}.password}" />
+        <property name="sf.serverurl" value="${sf.@{org}.loginurl}" />
+      </sequential>
+    </macrodef>
 
     <if>
-      <isset property="sf.override.username"/>
+      <isset property="org"/>
       <then>
-        <property name="sf.dev.username"
-                  value="${sf.override.username}"/>
-        <property name="sf.dev.password"
-                  value="${sf.override.password}"/>
-        <property name="sf.dev.loginurl"
-                  value="${sf.override.loginurl}"/>
+        <setOrg org="${org}"/>
       </then>
+      <else>
+        <sequential>
+          <property name="org" value="dev"/>
+          <property name="sf.username" value="${sf.dev.username}" />
+          <property name="sf.password" value="${sf.dev.password}" />
+          <property name="sf.serverurl" value="${sf.dev.loginurl}" />
+        </sequential>
+      </else>
     </if>
 
+    <property name="cumulusci.package.apiVersion"
+              value="${shark.package.apiVersion}"/>
+
     <!-- createUnmanagedPackage: Does an empty deployment into an unmanaged package to create it if it does not exist -->
-    <target name="createUnmanagedPackageDev">
+    <target name="createUnmanagedPackage">
         <if>
             <isset property="shark.package.name" />
             <then>
                 <delete dir="${basedir}/create_package" />
                 <mkdir dir="${basedir}/create_package" />
                 <buildPackageXml package="${shark.package.name}" version="${shark.package.apiVersion}" srcDir="create_package" />
-                <sf:deploy username="${sf.dev.username}" password="${sf.dev.password}" serverurl="${sf.dev.loginurl}" deployRoot="create_package"  />
+                <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="create_package"  />
                 <delete dir="${basedir}/create_package" />
             </then>
         </if>
@@ -75,80 +81,98 @@
     <!-- Load CumulusCI macros! targets -->
     <import file="${env.CUMULUSCI_PATH}/build/cumulusci.xml" />
 
-    <target name="checkDevConnection">
-      <sf:deploy username="${sf.dev.username}" password="${sf.dev.password}" serverurl="${sf.dev.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
-    </target>
-    <target name="checkUATConnection">
-      <sf:deploy username="${sf.test.username}" password="${sf.test.password}" serverurl="${sf.test.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
-    </target>
-    <target name="checkProdConnection">
-      <sf:deploy username="${sf.prod.username}" password="${sf.prod.password}" serverurl="${sf.prod.loginurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
-    </target>
     <target name="checkConnection">
-      <antcall target="checkDevConnection"/>
-      <antcall target="checkUATConnection"/>
-      <antcall target="checkProdConnection"/>
+      <echo message="Checking connection to ${org}"/>
+      <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
     </target>
 
     <target name="retrievePackaged">
       <sequential>
+        <echo message="Retrieving package from ${org} to ${shark.package.name}/"/>
         <delete dir="${shark.package.name}" />
         <mkdir dir="${shark.package.name}"/>
         <sf:retrieve
-          username="${sf.dev.username}"
-          password="${sf.dev.password}"
-          serverurl="${sf.dev.loginurl}"
+          username="${sf.username}"
+          password="${sf.password}"
+          serverurl="${sf.serverurl}"
           retrieveTarget="${shark.package.name}"
           packageNames="${shark.package.name}"/>
       </sequential>
     </target>
 
-    <target name="retrieveDev">
+    <target name="retrievePackagedToSrc">
       <sequential>
-        <delete dir="dev" />
-        <mkdir dir="dev"/>
+        <echo message="Retrieving package from ${org} to src/"/>
+        <delete dir="src" />
+        <mkdir dir="src"/>
         <sf:retrieve
-          username="${sf.dev.username}"
-          password="${sf.dev.password}"
-          serverurl="${sf.dev.loginurl}"
-          retrieveTarget="dev"
+          username="${sf.username}"
+          password="${sf.password}"
+          serverurl="${sf.serverurl}"
+          retrieveTarget="src"
           packageNames="${shark.package.name}"/>
       </sequential>
     </target>
 
-    <target name="retrieveTest">
+    <target name="retrieveOrg">
       <sequential>
-        <delete dir="test" />
-        <mkdir dir="test"/>
+        <echo message="Retrieving package from ${org} to ${org}/"/>
+        <delete dir="${org}" />
+        <mkdir dir="${org}"/>
         <sf:retrieve
-          username="${sf.test.username}"
-          password="${sf.test.password}"
-          serverurl="${sf.test.loginurl}"
-          retrieveTarget="test"
+          username="${sf.username}"
+          password="${sf.password}"
+          serverurl="${sf.serverurl}"
+          retrieveTarget="${org}"
           packageNames="${shark.package.name}"/>
       </sequential>
     </target>
 
-    <target name="retrieveProd">
-      <sequential>
-        <delete dir="prod" />
-        <mkdir dir="prod"/>
-        <sf:retrieve
-          username="${sf.prod.username}"
-          password="${sf.prod.password}"
-          serverurl="${sf.prod.loginurl}"
-          retrieveTarget="prod"
-          packageNames="${shark.package.name}"/>
-      </sequential>
+    <!-- uninstall: Removes all metadata from the package -->
+    <target name="uninstall">
+        <echo message="Uninstalling package from ${org}"/>
+        <delete dir="uninstallsrc" />
+        <delete dir="uninstall" />
+        <retrievePackaged dir="uninstallsrc" package="${shark.package.name}" />
+        <buildPackagedDestructiveChanges srcdir="uninstallsrc" dir="uninstall" package="${shark.package.name}" />
+        <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="uninstall" purgeOnDelete="true"  />
+        <delete dir="uninstallsrc" />
+        <delete dir="uninstall" />
     </target>
 
-    <target name="initialize-dev">
+    <!-- uninstall: Removes all non-standard unpackaged metadata from the org -->
+    <target name="uninstallUnpackaged">
+        <echo message="Uninstalling unpackaged metadata from ${org}"/>
+        <delete dir="uninstallsrc" />
+        <delete dir="uninstall" />
+        <retrieveUnpackaged dir="uninstallsrc" />
+        <deleteWhitelistedMetadata dir="uninstallsrc/unpackaged" />
+        <buildUnpackagedDestructiveChanges srcdir="uninstallsrc" dir="uninstall" />
+        <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="uninstall/standard" />
+        <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="uninstall/unpackaged" purgeOnDelete="true" />
+        <delete dir="uninstallsrc" />
+        <delete dir="uninstall" />
+    </target>
+
+
+    <target name="deploy">
       <sequential>
-        <delete dir="dev" />
-        <mkdir dir="dev"/>
-        <!-- clone github master into dev/ -->
-        <git-clone repository="${shark.repo.remote}" dest="dev" dir="${basedir}"/>
-        <!-- deploy dev into sf.dev -->
+        <echo message="Deploying fresh package to ${org}"/>
+        <delete dir="${org}" />
+        <mkdir dir="${org}"/>
+        <!-- clone github master into org/ -->
+        <git-clone repository="${shark.repo.remote}"
+                   dest="${org}" dir="${basedir}"/>
+        <!-- create the unmanaged package so that uninstall wont fail -->
+        <antcall target="createUnmanagedPackage"/>
+        <!-- clear the org -->
+        <antcall target="uninstall"/>
+        <!-- deploy org/ into sf.org -->
+        <sf:deploy username="${sf.username}"
+                   password="${sf.password}"
+                   serverurl="${sf.serverurl}"
+                   deployRoot="${org}/src" />
+
         <!-- load test data -->
       </sequential>
 
