@@ -3,11 +3,14 @@
 
     <fail>
        <condition>
+         <or>
            <not><isset property="env.CUMULUSCI_PATH" /></not>
+           <not><isset property="env.SHARK_PATH" /></not>
+         </or>
        </condition>
     </fail>
 
-    <import file="${basedir}/git-ant-macros.xml" />
+    <import file="${env.SHARK_PATH}/git-ant-macros.xml" />
 
     <property name="cumulus_ci.basedir"
               value="${env.CUMULUSCI_PATH}/build"/>
@@ -137,6 +140,18 @@
           retrieveTarget="prod"
           packageNames="${shark.package.name}"/>
       </sequential>
+    </target>
+
+    <target name="initialize-dev">
+      <sequential>
+        <delete dir="dev" />
+        <mkdir dir="dev"/>
+        <!-- clone github master into dev/ -->
+        <git-clone repository="${shark.repo.remote}" dest="dev" dir="${basedir}"/>
+        <!-- deploy dev into sf.dev -->
+        <!-- load test data -->
+      </sequential>
+
     </target>
 
 
