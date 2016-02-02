@@ -185,9 +185,20 @@
 
         <!-- create new branch named feature/${feature}-->
         <!-- probably should check if branch exists first -->
-        <git-checkout branch="master"
-                      targetbranch="feature/${feature}"
-                      dir="${basedir}"/>
+        <trycatch>
+          <try>
+            <echo>Trying to create feature branch</echo>
+            <git-checkout branch="master"
+                          targetbranch="feature/${feature}"
+                          dir="${basedir}"
+                          failerror="true"/>
+          </try>
+          <catch>
+            <echo>Checking out branch instead</echo>
+            <git-checkout branch="feature/${feature}"
+                          dir="${basedir}"/>
+          </catch>
+        </trycatch>
         <!-- retrieve packaged to src -->
         <echo message="Retrieving package from ${org} to src/"/>
         <sf:retrieve
