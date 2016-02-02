@@ -24,6 +24,12 @@
           <loadproperties srcFile="${basedir}/build.properties"/>
         </then>
     </if>
+    <if>
+        <available file="${basedir}/shark.properties" />
+        <then>
+          <loadproperties srcFile="${basedir}/shark.properties"/>
+        </then>
+    </if>
     <!-- properties now contains:
       sf.dev.username=
       sf.dev.password=
@@ -57,6 +63,14 @@
           <property name="sf.serverurl" value="${sf.dev.loginurl}" />
         </sequential>
       </else>
+    </if>
+    <if>
+      <isset property="env.SF_USERNAME">
+      <then>
+        <property name="sf.username" value="${env.SF_USERNAME}" />
+        <property name="sf.password" value="${env.SF_PASSWORD}" />
+        <property name="sf.serverurl" value="${env.SF_SERVERURL}" />
+      </then>
     </if>
 
     <property name="cumulusci.package.apiVersion"
