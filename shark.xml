@@ -39,7 +39,10 @@
       sf.test.loginurl=
       sf.prod.username=
       sf.prod.password=
-      sf.prod.loginurl= -->
+      sf.prod.loginurl=
+      shark.remote.repo=
+      shark.package.apiVersion=
+      shark.package.name-->
 
     <macrodef name="setOrg">
       <attribute name="org"/>
@@ -65,8 +68,9 @@
       </else>
     </if>
     <if>
-      <isset property="env.SF_USERNAME">
+      <isset property="env.SF_USERNAME"/>
       <then>
+        <property name="org" value="env"/>
         <property name="sf.username" value="${env.SF_USERNAME}" />
         <property name="sf.password" value="${env.SF_PASSWORD}" />
         <property name="sf.serverurl" value="${env.SF_SERVERURL}" />
@@ -96,20 +100,6 @@
     <target name="checkConnection">
       <echo message="Checking connection to ${org}"/>
       <sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" deployRoot="${cumulus_ci.basedir}/empty"  />
-    </target>
-
-    <target name="retrievePackaged">
-      <sequential>
-        <echo message="Retrieving package from ${org} to ${shark.package.name}/"/>
-        <delete dir="${shark.package.name}" />
-        <mkdir dir="${shark.package.name}"/>
-        <sf:retrieve
-          username="${sf.username}"
-          password="${sf.password}"
-          serverurl="${sf.serverurl}"
-          retrieveTarget="${shark.package.name}"
-          packageNames="${shark.package.name}"/>
-      </sequential>
     </target>
 
     <target name="retrievePackagedToSrc">
@@ -166,8 +156,7 @@
         <delete dir="uninstall" />
     </target>
 
-
-    <target name="deploy">
+    <target name="destructiveDeploy">
       <sequential>
         <echo message="Deploying fresh package to ${org}"/>
         <delete dir="${org}" />
@@ -187,7 +176,33 @@
 
         <!-- load test data -->
       </sequential>
+    </target>
 
+    <target name="deployFresh">
+      <sequential>
+        <echo message="Deploying fresh package to ${org}"/>
+        <delete dir="${org}" />
+        <mkdir dir="${org}"/>
+        <!-- clone github master into org/ -->
+        <git-clone repository="${shark.repo.remote}"
+                   dest="${org}" dir="${basedir}"/>
+        <!-- create the unmanaged package so that uninstall wont fail -->
+        <!-- deploy org/ into sf.org -->
+        <sf:deploy username="${sf.username}"
+                   password="${sf.password}"
+                   serverurl="${sf.serverurl}"
+                   deployRoot="${org}/src" />
+
+        <!-- load test data -->
+      </sequential>
+    </target>
+
+
+    <target name="deploy">
+      <sf:deploy username="${sf.username}"
+                 password="${sf.password}"
+                 serverurl="${sf.serverurl}"
+                 deployRoot="src" />
     </target>
 
     <target name="retrieve-feature">
@@ -224,5 +239,17 @@
       </sequential>
     </target>
 
-
+    <target name="deploy-feature">
+      <sequential>
+        <delete dir="working-feature" />
+        <git-clone repository="${shark.remote.repo}" dest="working-feature/" dir="${basedir}"/>
+        <git-checkout branch="feature/${feature}"
+                      dir="working-feature/"/>
+        <sf:deploy username="${sf.username}"
+                   password="${sf.password}"
+                   serverurl="${sf.serverurl}"
+                   deployRoot="working-feature/src" />
+        <delete dir="working-feature" />
+      </sequential>
+    </target>
 </project>
