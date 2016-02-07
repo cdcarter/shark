@@ -94,6 +94,10 @@
         </if>
     </target>
 
+    <target name="buildSrcPackageXml">
+      <buildPackageXml package="${shark.package.name}" version="${shark.package.apiVersion}" srcDir="src" />
+    </target>
+
     <!-- Load CumulusCI macros! targets -->
     <import file="${env.CUMULUSCI_PATH}/build/cumulusci.xml" />
 
